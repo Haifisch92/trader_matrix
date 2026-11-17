@@ -21,7 +21,7 @@
 Il progetto segue le best practice di ESP-IDF suddividendo le funzionalità in componenti dedicati nella cartella `components/`:
 
 ```text
-esp_matrix_project/
+tradermatrix/
 ├── CMakeLists.txt              # CMake principale di progetto
 ├── main/
 │   ├── CMakeLists.txt
@@ -89,4 +89,4 @@ I contributi sono benvenuti! Se vuoi suggerire miglioramenti o aggiungere nuove 
 ## 🙏 Ringraziamenti e Crediti
 Un ringraziamento speciale ai creatori delle librerie esterne utilizzate in questo progetto:
 * [ESP32-HUB75-MatrixPanel-DMA](https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA) per la gestione ottimizzata della matrice LED HUB75 via DMA.
-* [TetrisAnimation](https://github.com/...) per le animazioni.
+* [clockwise](https://github.com/jnthas/clockwise) per l interfaccia dell orologio.
