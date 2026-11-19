@@ -33,28 +33,27 @@ void matrix_clear();
 int matrix_clear_area(int x1, int x2, int y1, int y2);
 void matrix_update_text(const char* text);
 
-void wallstreet_text(const char* text, const int x, int y);
-int ws_text_draw(const char* text, const int x, int y); 
-void draw_chart(float price[][4], int size, int chart_h, int chart_w, int top_padding);
+int wallstreet_text(const char* text, const int x, int y);
+int ws_text_draw(const char* text, int x, int y); 
+void draw_chart(float price[][4], int size, int chart_h, int chart_w, int top_padding, int chart_mode);
 
 
-void draw_text(int x, int y, const char* text, int r, int g, int b, bool small);
-void draw_char(int x, int y, char c, int r, int g, int b, bool small);
+void draw_text(int x, int y, const char* text, int r, int g, int b, int brightness);
+void draw_char(int x, int y, char c, uint8_t color);
 
-void draw_logo(int start_x, int start_y, int end_x, int end_y, 
-				int width, int height, const uint16_t *logo_array);
+void draw_logo(int width, int height, const uint16_t *logo_array,
+                int start_x, int end_x, int start_y, int end_y, 
+                int offset_x, int offset_y);
 
 void scanning_logo(const uint16_t *logo_array, int logo_width, int logo_height, 
-                    int matrix_width, int matrix_height);
+                    int start_x, int end_x, int start_y, int end_y, uint16_t scanner_color);
 
-void scanning_clock(const uint16_t *logo_array, int logo_width, int logo_height, 
-                    int matrix_width, int matrix_height, char *old_time, char *new_time);
-
-void scanning_clock1(const uint16_t *logo_array, int logo_width, int logo_height, 
-                    int matrix_width, int matrix_height);
+void update_clock(char *old_time, char *new_time, int clock_start_x, int clock_start_y, int clock_mode);
 
 void draw_gfxtext(int x, int y, const char *text, int clip_x1, int clip_x2, 
-                    int clip_y1, int clip_y2);
+                    int clip_y1, int clip_y2, uint16_t color);
+
+int gfxtext_len(const char *text);
 
 
 

@@ -11,11 +11,13 @@
 #include <time.h>
 #include <sys/time.h>
 
-#define MATRIX_H 32
-#define MATRIX_W 64
-#define CHART_H  20 
+// -1 poichè i pixel della matrice vengono indicizzati da 0  0 -> 63 = 64 pixel utilizzati
+#define MATRIX_H 32 - 1
+#define MATRIX_W 64 - 1
 
 bool ap_mode = false;
+int wallstreet_pos = 0;
+int wallstreet1_pos = 64;
 
 void set_time(){
     struct tm tm = {
@@ -44,7 +46,7 @@ static void wifi_credential_handler(const char *ssid, const char *password){
     //wifi_init_sta(ssid, password);     
     //ap_mode = false;
 }
-
+/*
 void slotmachine_clock(){
     //i gfx hanno le cordinate del disegno caratteri che partono dal basso 
     //i disegni normali o le clear area partono dall alto 
@@ -65,22 +67,57 @@ void slotmachine_clock(){
         vTaskDelay(pdMS_TO_TICKS(500));
     }
 
+}*/
+
+void clock_face(){
+    uint16_t weak_white = 0x31a6;
+
+    scanning_logo(_WORLD_MAP, 120, 56, 0, MATRIX_W, 0, MATRIX_H, 0);
+    update_clock("", "03:34", 18, 14 , 1);
 }
+
+void wallstreet_face(int wallstreet_mode){
+        
+        if(wallstreet_mode == 0 || wallstreet_mode == 2) matrix_clear_area(0, MATRIX_W, 26, MATRIX_H);
+        if(wallstreet_mode == 1 || wallstreet_mode == 2) matrix_clear_area(0, MATRIX_W, 0, 7);
+        //accetta solo caratteri maiuscoli
+        //deve avere uno spazio finale 
+        // i caratteri + e meno definiscono il colore rosso o verde e non vengono mai printati
+        char testo[] = "-NASDAQ <3% +EURUSD >2% -XAUUSD <1% -GBPUSD <27% +SP500 >10% ";
+
+        if(wallstreet_mode == 0 || wallstreet_mode == 2)
+            wallstreet_pos = wallstreet_text(testo, wallstreet_pos, 26);
+
+        if(wallstreet_mode == 1 || wallstreet_mode == 2)
+            wallstreet1_pos = wallstreet_text(testo, wallstreet1_pos, 0);
+
+        switch(wallstreet_mode){
+            case 0:
+                scanning_logo(_WORLD_MAP, 120, 56, 0, MATRIX_W, 0, MATRIX_H - 7, 0);
+                break;
+            case 1:
+                scanning_logo(_WORLD_MAP, 120, 56, 0, MATRIX_W, 7, MATRIX_H, 0);
+                break;
+            case 2:
+                scanning_logo(_WORLD_MAP, 120, 56, 0, MATRIX_W, 7, MATRIX_H - 7, 0);
+                break;
+        }
+}
+
+void chart_face(){
+    matrix_clear();
+    draw_text(0,0, "EURUSD 1.1097",0, 255, 0, 125);
+    draw_chart(eurusd, sizeof(eurusd), 20, MATRIX_W, (MATRIX_H - 20) - 1, 0);
+}
+
 void main_task(){
-    matrix_init();
 
-    //draw_chart("EURUSD", eurusd, sizeof(eurusd), CHART_H, MATRIX_W, 3);
-
-    // orario ammesso da pixel x 19 a pixel x 23
-    // area in cui il mappamondo non viene disegnato
-    scanning_logo(_WORLD_MAP, 120, 56, MATRIX_W, MATRIX_H);
-    //draw_gfxtext(20, 19, "12:30", 0, 64, 0, 32);
     int last_minute = -1;
     char last_strtime[64] = "";
-
+    //clock_face();
 
     while(1){
-
+        
         //gestione orario
         time_t now;
         struct tm timeinfo;
@@ -90,31 +127,14 @@ void main_task(){
         time(&now);
         localtime_r(&now, &timeinfo);
         strftime(strtime, sizeof(strtime), "%H:%M", &timeinfo);
-        //ESP_LOGI("main","ora esatta: %s", strtime);
 
         if(timeinfo.tm_min != last_minute){
-            scanning_clock(_WORLD_MAP, 120, 56, MATRIX_W, MATRIX_H, last_strtime, strtime);
             last_minute = timeinfo.tm_min;
             strcpy(last_strtime, strtime);
 
         }
-
-        //matrix_clear();
-        
-        //draw_gfxtext(0, 30, "EUR USD  1.1109", 0, 64, 0, 32);
-        //draw_chart(eurusd, sizeof(eurusd), MATRIX_H - 1, MATRIX_W, 0);
-        /*
-        matrix_clear_area(0, 64, 26, 32);
-
-        //accetta solo caratteri maiuscoli
-        //deve avere uno spazio finale 
-        // i caratteri + e meno definiscono il colore rosso o verde e non vengono mai printati
-        char testo[] = "-NASDAQ <3% +EURUSD >2% -XAUUSD <1% -GBPUSD <27% +SP500 >10% ";
-        wallstreet_text(testo, 0, 26);
-        */
-        
-    
-        vTaskDelay(pdMS_TO_TICKS(500));
+        wallstreet_face(2);
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
@@ -127,6 +147,8 @@ void app_main(void) {
     ap_mode = true;
 
     start_webserver();
+    matrix_init();
+
     set_wifi_callback(wifi_credential_handler);
     TaskHandle_t maintask_handle = NULL;
     xTaskCreate(main_task, "main_task", 4092, NULL, 5, &maintask_handle);

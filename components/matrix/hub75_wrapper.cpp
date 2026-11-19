@@ -36,7 +36,7 @@ int matrix_clear_area(int x1, int x2, int y1, int y2) {
 
     //pulizia solo di una specifica area 
     for(int x = x1; x <= x2; x++){
-        for(int y = y1; y < y2; y ++){
+        for(int y = y1; y <= y2; y ++){
             matrix->drawPixel(x, y, matrix->color565(0, 0, 0));
         }
     }
@@ -53,86 +53,118 @@ void matrix_set_pixel(int x, int y, uint16_t color) {
 }
 
 
-void draw_char(int x, int y, char c, int r, int g, int b, bool small) {
+void draw_char(int x, int y, char c, uint16_t color) {
     if (c < 32 || c > 126) return; // Fuori range ASCII gestito
 
-    uint8_t brightness = 125;
-    uint8_t sr = (r * brightness) >> 8;
-    uint8_t sg = (g * brightness) >> 8;
-    uint8_t sb = (b * brightness) >> 8;
-
     int index = c - 32; // Calcola l'indice partendo dallo spazio
-    int font_lenght = small ? 3 : 4; 
 
-    for (int col = 0; col < font_lenght; col++) {
+    for (int col = 0; col < 4; col++) {
         // Prendo colonna per colonna (8 bit) del char
-        uint8_t colData = small ? font3x5[index][col] : font4x6[index][col]; 
+        uint8_t col_data = font4x6[index][col]; 
         
         for (int row = 0; row < 8; row++) {
             // Se il bit alla posizione 'row' è 1, accendi il pixel
-            if (colData & (1 << row)) {
-                matrix->drawPixel(x + col, y + row, matrix->color565(sr, sg, sb));
+            if (col_data & (1 << row)) {
+                matrix->drawPixel(x + col, y + row, color);
             }
         }
     }
 }
 
 // Funzione per stampare una stringa intera
-void draw_text(int x, int y, const char* text, int r, int g, int b, bool small) {
-    int currentX = x;
-    while (*text) {
-        draw_char(currentX, y, *text, r, g, b, small);
+void draw_text(int x, int y, const char* text, int r, int g, int b, int brightness) {
+    int text_x = x;
 
-        if(small)
-            currentX += 4; // 5 pixel del carattere + 1 pixel di spazio
+    uint8_t sr = (r * brightness) >> 8;
+    uint8_t sg = (g * brightness) >> 8;
+    uint8_t sb = (b * brightness) >> 8;
+
+    uint16_t color = matrix->color565(sr, sg, sb);
+    ESP_LOGI("matrix", "color 0x%04x", color);
+    while (*text) {
+        draw_char(text_x, y, *text, color);
+
+        // definisco la x per il carattere successivo
+        // 4 pixel del carattere + 1 pixel di spazio, tranne per la lettera I che occupa meno
+        if(*text == 'I')
+            text_x += 4;
         else
-            currentX += 6; // 5 pixel del carattere + 1 pixel di spazio
+            text_x += 5;
+
         text++;
     }
 }
 
 // Funzione per disegnare un logo RGB565 sulla matrice
-void draw_logo(int start_x, int start_y, int end_x, int end_y, 
-                int width, int height, const uint16_t *logo_array) {
+// la funzione accetta immagini anche più gradi della matrice ed è possibe definirgli un area
+// della matrice in cui è ammesso il disegno , inoltre si puo avere uno scostamento orizzontale
+// e verticale dell immagine... i primi parametri width height e logo_array sono relativi
+// all immagine, start_x start_y end_x end_y definiscono l area di ritaglio o area della matrice
+// in cui è ammesso disegnare, gli ultimi due parametri invece definiscono lo scostamento. 
+void draw_logo(int width, int height, const uint16_t *logo_array,
+                int start_x, int end_x, int start_y, int end_y, 
+                int offset_x, int offset_y) {
 
-    for (int y = 0; y < height && y < end_y; y++) {
-        for (int x = 0; x < width && x < end_x; x++) {
+    for (int y = 0; y < height; y++) {
+
+        for (int x = 0; x < width; x++) {
             // Legge il colore del pixel corrente dall'array
             // moltiplicando la larghezza dell immagine alla y corrente
             // e aggiungendogli la x
             uint16_t pixel_color = logo_array[y * width + x];
-
+            int pixel_x = offset_x + x;
+            int pixel_y = offset_y + y;
+            bool x_area = pixel_x >= start_x && pixel_x <= end_x;
+            bool y_area = pixel_y >= start_y && pixel_y <= end_y;
             // Se il pixel non è nero, lo disegna
-            if (pixel_color != 0x0000) 
-                matrix->drawPixel(start_x + x, start_y + y, pixel_color);
+            
+            if (pixel_color != 0x0000 && x_area && y_area){
+                matrix->drawPixel(pixel_x, pixel_y, pixel_color);
+            }
         }
     }
 }
 
 
+int gfxtext_len(const char *text) {
 
 
-
-void draw_gfxtext(int x, int y, const char *text, int clip_x1, int clip_x2, 
-                    int clip_y1, int clip_y2) {
-    int16_t cursorX = x;
-    int16_t cursorY = y;
-    const GFXfont *gfxFont = &small4pt7b;
-
-    uint8_t brightness = 75;
-    uint8_t sr = (255 * brightness) >> 8;
-    uint8_t sg = (255 * brightness) >> 8;
-    uint8_t sb = (255 * brightness) >> 8;
+    int len = 0;
+    const GFXfont *gfx_font = &small4pt7b;
 
     while (*text) {
         unsigned char c = *text;
-        if (c >= gfxFont->first && c <= gfxFont->last) {
+        if (c >= gfx_font->first && c <= gfx_font->last) {
 
             // cosi ottengo l indice 
-            c -= gfxFont->first;
+            c -= gfx_font->first;          
+            // Riga corretta senza residui
+            GFXglyph *glyph = &(((GFXglyph *)gfx_font->glyph)[c]);
+            
+            len += glyph->advance_x;
+        }
+        text++;
+    }
+
+    return len;
+}
+
+
+void draw_gfxtext(int x, int y, const char *text, int clip_x1, int clip_x2, 
+                    int clip_y1, int clip_y2, uint16_t color) {
+    int16_t cursor_x = x;
+    int16_t cursor_y = y;
+    const GFXfont *gfx_font = &small4pt7b;
+
+    while (*text) {
+        unsigned char c = *text;
+        if (c >= gfx_font->first && c <= gfx_font->last) {
+
+            // cosi ottengo l indice 
+            c -= gfx_font->first;
             
             // Riga corretta senza residui
-            GFXglyph *glyph = &(((GFXglyph *)gfxFont->glyph)[c]);
+            GFXglyph *glyph = &(((GFXglyph *)gfx_font->glyph)[c]);
             
             uint8_t   w  = glyph->width;
             uint8_t   h  = glyph->height;
@@ -146,131 +178,115 @@ void draw_gfxtext(int x, int y, const char *text, int clip_x1, int clip_x2,
             for (int yy = 0; yy < h; yy++) {
                 for (int xx = 0; xx < w; xx++) {
                     if (!(bit & 7)) {
-                        bits = gfxFont->bitmap[bo++];
+                        bits = gfx_font->bitmap[bo++];
                     }
                     //printf("%d\n",bits);
                     if (bits & 0x80) {
-                        int pixel_x = cursorX + xo + xx;
-                        int pixel_y = cursorY + yo + yy;
+                        int pixel_x = cursor_x + xo + xx;
+                        int pixel_y = cursor_y + yo + yy;
                         // controllo su aree di disegno consentite
                         bool check_y =  pixel_y >= clip_y1 && pixel_y <= clip_y2;
                         bool check_x = pixel_x >= clip_x1 && pixel_x <= clip_x2;
-
+                        
                         if(check_x && check_y)
-                            matrix->drawPixel(pixel_x, pixel_y, matrix->color565(sr, sg, sb));
+                            matrix->drawPixel(pixel_x, pixel_y, color);
                     }
                     bits <<= 1;
                     bit++;
                 }
             }
-            cursorX += glyph->advance_x;
+            cursor_x += glyph->advance_x;
         }
         text++;
     }
 }
-void scanning_clock(const uint16_t *logo_array, int logo_width, int logo_height, 
-                    int matrix_width, int matrix_height, char *old_time, char *new_time) {
 
-    int offset = -10;
-    uint8_t brightness = 55;
-    uint8_t sr = (255 * brightness) >> 8;
-    uint8_t sg = (255 * brightness) >> 8;
-    uint8_t sb = (255 * brightness) >> 8;
 
-    for(int s = 10; s <= 64; s++){
-        matrix_clear();
-        draw_gfxtext(19, 19, old_time, s, 64, 0, 32);
+void update_clock(char *old_time, char *new_time, int clock_start_x, int clock_start_y, int clock_mode) {
 
-        draw_logo(offset, 0, matrix_width + abs(offset), matrix_height, 
-                    logo_width, logo_height, logo_array);
-        matrix->drawFastVLine(s, 0, matrix_height, matrix->color565(sr, sg, sb));
-        vTaskDelay(pdMS_TO_TICKS(25));
-        
+    // area in pixel tolgo 1 perchè è tutto indicizzato da 0 
+    int clock_area_width = 25 - 1;
+    int clock_area_height = 5 - 1;
+    int colon_x = clock_area_width / 2;
+    uint16_t white = 0x4a49;
+
+    int clock_end_x = clock_start_x + clock_area_width;
+    int clock_end_y = clock_start_y + clock_area_height;
+
+    // i due punti : dell orario devono avere poszione fissa a una determinata x
+    // trovo quanti pixel usa la parte dell ora e definisco la x dell orario completo, 
+    // scostandomi verso sinistra dai : di quanti pixel usa l ora 
+
+    char old_hour[3];
+    char old_copy[10];
+    strncpy(old_copy, old_time, sizeof(old_copy) - 1);
+
+    if(!sscanf(old_copy, "%2[^:]", old_hour))
+        ESP_LOGI("matrix", "errore sscanf nell estrarre l ora");
+    int old_hour_len = gfxtext_len(old_hour);
+
+    char new_hour[3];
+    char new_copy[10];
+    strncpy(new_copy, new_time, sizeof(new_copy) - 1);
+
+    if(!sscanf(new_copy, "%2[^:]", new_hour))
+        ESP_LOGI("matrix", "errore sscanf nell estrarre l ora");
+    int new_hour_len = gfxtext_len(new_hour);
+
+
+    int old_time_x = (clock_start_x + colon_x) - old_hour_len;
+    int new_time_x = (clock_start_x + colon_x) - new_hour_len;
+
+
+    for(int s = clock_start_x; s <= clock_end_x; s++){
+        matrix_clear_area(clock_start_x, clock_end_x, clock_start_y, clock_end_y);
+        // i gfx text hanno la base del carattere sulla cordinata x
+        // al contrario degli altri text che hanno la vetta del carattere sulla x
+        draw_gfxtext(old_time_x, clock_end_y, old_time, s, clock_end_x, clock_start_y, clock_end_y, white);
+        vTaskDelay(pdMS_TO_TICKS(25));  
     }
 
-    for(int s = 64; s >= 10; s--){
-        matrix_clear();
-        draw_gfxtext(19, 19, new_time, s, 64, 0, 32);
-
-        draw_logo(offset, 0, matrix_width + abs(offset), matrix_height, 
-                    logo_width, logo_height, logo_array);
-        matrix->drawFastVLine(s, 0, matrix_height, matrix->color565(sr, sg, sb));
-        vTaskDelay(pdMS_TO_TICKS(25));
-        
-    }
-
-
-}
-void scanning_clock1(const uint16_t *logo_array, int logo_width, int logo_height, 
-                    int matrix_width, int matrix_height) {
-
-    int offset = -10;
-    uint8_t brightness = 55;
-    uint8_t sr = (255 * brightness) >> 8;
-    uint8_t sg = (255 * brightness) >> 8;
-    uint8_t sb = (255 * brightness) >> 8;
-
-    for(int s = 10; s <= 64; s++){
-        matrix_clear();
-        draw_gfxtext(20, 19, "12:30", s, 64, 0, 32);
-        draw_gfxtext(20, 19, "12:31", 0, s, 0, 32);
-        draw_logo(offset, 0, matrix_width + abs(offset), matrix_height, 
-                    logo_width, logo_height, logo_array);
-        matrix->drawFastVLine(s, 0, matrix_height, matrix->color565(sr, sg, sb));
-        vTaskDelay(pdMS_TO_TICKS(25));
-        
-    }
-
-    for(int s = 64; s >= 10; s--){
-        matrix_clear();
-        draw_gfxtext(20, 19, "12:31", 0, 64, 0, 32);
-
-        draw_logo(offset, 0, matrix_width + abs(offset), matrix_height, 
-                    logo_width, logo_height, logo_array);
-        matrix->drawFastVLine(s, 0, matrix_height, matrix->color565(sr, sg, sb));
+    for(int s = clock_end_x; s >= clock_start_x; s--){
+        matrix_clear_area(clock_start_x, clock_end_x, clock_start_y, clock_end_y);   
+        draw_gfxtext(new_time_x, clock_end_y, new_time, s, clock_end_x, clock_start_y, clock_end_y, white);
         vTaskDelay(pdMS_TO_TICKS(25));
         
     }
 
 
 }
+
 void scanning_logo(const uint16_t *logo_array, int logo_width, int logo_height, 
-                    int matrix_width, int matrix_height) {
+                    int start_x, int end_x, int start_y, int end_y, uint16_t scanner_color) {
 
-    int offset = -10;
-    int target = 10;
-
-    uint8_t brightness = 55;
-    uint8_t sr = (255 * brightness) >> 8;
-    uint8_t sg = (255 * brightness) >> 8;
-    uint8_t sb = (255 * brightness) >> 8;
+    int target = -1;
 
     // avanzamento della linea scanner da 0 fino alla larghezza dello schermo
-    for (int scanner_x = 0 + (offset); scanner_x <= matrix_width; scanner_x++) {
-        
-        matrix->fillScreen(0);
+    for (int scanner_x = 0; scanner_x <= end_x; scanner_x++) {   
+        matrix_clear_area(start_x, end_x, start_y, end_y);
 
         // disegna la mappa colonna per colonna, ma SOLO fino a scanner_x
-        draw_logo(offset, 0, scanner_x + abs(offset), matrix_height, 
-                    logo_width, logo_height,  logo_array);
+        draw_logo(logo_width, logo_height, logo_array, start_x, scanner_x, start_y, end_y, -10, 0);
 
-        matrix->drawFastVLine(scanner_x, 0, matrix_height, matrix->color565(sr, sg, sb));
+        if(scanner_color != 0x0000)
+            matrix->drawFastVLine(scanner_x, start_y, (end_y - start_y), scanner_color);
 
         vTaskDelay(pdMS_TO_TICKS(25));
     }
 
-    for (int scanner_x = matrix_width; scanner_x >= target; scanner_x--) {
-        matrix->fillScreen(0);
+    if(scanner_color != 0x0000){
+        for (int scanner_x = end_x; scanner_x >= target; scanner_x--) {
+            matrix_clear_area(start_x, end_x, start_y, end_y);
 
-        // disegna l'intera mappa fissa sullo sfondo
-        draw_logo(offset, 0, matrix_width + abs(offset), matrix_height, 
-                    logo_width, logo_height, logo_array);
+            // disegna l'intera mappa fissa sullo sfondo
+            draw_logo(logo_width, logo_height, logo_array, start_x, end_x, start_y, end_y, -10, 0);
 
-        // disegna la riga che arretra verso la time zone
-        matrix->drawFastVLine(scanner_x, 0, matrix_height, matrix->color565(sr, sg, sb));
-        draw_gfxtext(20, 19, "12:30", scanner_x, 64, 0, 32);
+            // disegna la riga che arretra verso la time zone
+            matrix->drawFastVLine(scanner_x, start_y, (end_y - start_y), scanner_color);
+            //draw_gfxtext(20, 19, "12:30", scanner_x, 64, 0, 32);
 
-        vTaskDelay(pdMS_TO_TICKS(25)); // Velocità di ritorno (puoi regolarla)
+            vTaskDelay(pdMS_TO_TICKS(25));
+        }
     }
 
 }
@@ -280,6 +296,7 @@ int ws_text_draw(const char* text, const int x, int y) {
 
     // colori di default al verde cosi se uno dimentica di impostarli almeno si vede
     int i = 0, r = 0, g = 255, b = 0, char_x = x;
+    int brightness = 240;
 
     // primo ciclo di stampa caratteri sulla matrice
     while(text[i] != '\0'){
@@ -296,8 +313,14 @@ int ws_text_draw(const char* text, const int x, int y) {
             b = 0;
         }
 
-        if(text[i] != ' ' && text[i] != '+' && text[i] != '-')
-            draw_char(char_x, y, text[i], r, g, b, false);
+        if(text[i] != ' ' && text[i] != '+' && text[i] != '-'){
+            uint8_t sr = (r * brightness) >> 8;
+            uint8_t sg = (g * brightness) >> 8;
+            uint8_t sb = (b * brightness) >> 8;
+
+            uint16_t color = matrix->color565(sr, sg, sb);
+            draw_char(char_x, y, text[i], color);
+        }
 
         //scostamento della x tra un carattere e un altro
         //5 pixel per ogni carattere + 1 di spazio
@@ -316,8 +339,25 @@ int ws_text_draw(const char* text, const int x, int y) {
     return text_len;
 }
 
+int wallstreet_text(const char* text, int x, int y) {
+    // posizione della x del testo diminuisce a ogni chiamata di func 
+    int scroll_x = x;
+
+    // primo ciclo di stampa caratteri sulla matrice
+    int text_len = ws_text_draw(text, scroll_x, y);
+
+    // secondo ciclo per dare la continuità al wall text
+    ws_text_draw(text, scroll_x + text_len, y);
+
+    scroll_x--;
+    if(scroll_x <= -(text_len)) scroll_x = 0;
+
+    return scroll_x;
+
+}
+
 void draw_chart(float price[][4], int size, int chart_h, int chart_w, 
-                            int top_padding) {
+                            int top_padding, int chart_mode) {
     
     //divido 4 perchè so che l array multidimensionale contiene 4 elementi ciascuno 
     //da 4 byte (float = 4byte)
@@ -371,44 +411,33 @@ void draw_chart(float price[][4], int size, int chart_h, int chart_w,
         //siccome l asse y sulla matrice parte dall alto, quindi y = 0 è il punto piu alto
         //devo reversare pure il valore y
         y = (dimension + padding_y) - y;
-        matrix_set_pixel(pixel, y, matrix->color565(0, 255, 0));
-        /*
 
-        uint8_t brightness = 0;
-        for(int y2 = chart_h; y2 >= y; y2--){
-            if(y2 == y) brightness = 120;
-            else brightness = 10;
-            uint8_t sr = (0 * brightness) >> 8;
-            uint8_t sg = (255 * brightness) >> 8;
-            uint8_t sb = (0 * brightness) >> 8;
-            //brightness += 10;
-            matrix_set_pixel(pixel, y2, matrix->color565(sr, sg, sb));
-        }*/
-        //matrix_set_pixel(pixel, 0, 0, 255, 0);
+        if(chart_mode == 0){
+            matrix_set_pixel(pixel, y, matrix->color565(0, 255, 0));   
+        }else if(chart_mode == 1){
+            uint8_t brightness = 0;
+            for(int y2 = chart_h; y2 >= y; y2--){
+                if(y2 == y) brightness = 120;
+                else brightness = 10;
+                uint8_t sr = (0 * brightness) >> 8;
+                uint8_t sg = (255 * brightness) >> 8;
+                uint8_t sb = (0 * brightness) >> 8;
+                //brightness += 10;
+                matrix_set_pixel(pixel, y2, matrix->color565(sr, sg, sb));
+            }
+        }else{
+            uint8_t brightness = 10;
+            for(int y2 = chart_h; y2 >= y; y2--){
+                uint8_t sr = (0 * brightness) >> 8;
+                uint8_t sg = (255 * brightness) >> 8;
+                uint8_t sb = (0 * brightness) >> 8;
+
+                brightness += 10;
+                if(brightness >= 245) brightness = 245;
+
+                matrix_set_pixel(pixel, y2, matrix->color565(sr, sg, sb));
+            }           
+        }
     }
-
-}
-
-void wallstreet_text(const char* text, const int x, int y) {
-
-    //scroll_x variabile statica per spostare il testo verso sinistra
-    //ogni chiamata di funzione
-    static int scroll_x;
-    static int first_call = 1;
-
-    if(first_call){
-        scroll_x = x;
-        first_call = 0;
-    }
-
-    // primo ciclo di stampa caratteri sulla matrice
-    int text_len = ws_text_draw(text, scroll_x, y);
-
-    // secondo ciclo per dare la continuità al wall text
-    ws_text_draw(text, scroll_x + text_len, y);
-
-    scroll_x--;
-    if(scroll_x <= -(text_len)) scroll_x = 0;
-
 }
 
