@@ -8,11 +8,17 @@ static const char *TAG = "HTTP_SERVER";
 httpd_handle_t http_server = NULL;
 
 static wifi_credentials_callback_t wifi_credential = NULL;
+static matrixface_callback_t matrix_face = NULL;
 
 // funzione per registrare la callback della wifi
 void set_wifi_callback(wifi_credentials_callback_t callback)
 {
     wifi_credential = callback;
+}
+
+void set_matrixface_callback(matrixface_callback_t callback)
+{
+    matrix_face = callback;
 }
 
 
@@ -40,32 +46,46 @@ int jsondata_parser(char *buf){
 
     if (json) {
 
-        // WIFI
-        cJSON *wifi = cJSON_GetObjectItem(json, "wifi");
-        if(!cJSON_IsObject(wifi)) {
-            ESP_LOGI(TAG, "Json parse: wifi non trovato");
-            return 0;
-        }
+        // CURRENT VIEW
+        cJSON *view = cJSON_GetObjectItem(json, "current_view");
+        if(view && cJSON_IsString(view)){
+            ESP_LOGI(TAG, "view %s set", view->valuestring);
 
-        cJSON *wifi_enbl = cJSON_GetObjectItem(wifi, "enabled");
-        cJSON *wifi_ssid = cJSON_GetObjectItem(wifi, "ssid");
-        cJSON *wifi_ipv4 = cJSON_GetObjectItem(wifi, "ipv4");
-        cJSON *wifi_password = cJSON_GetObjectItem(wifi, "password");
-
-        //if(wifi_enbl && cJSON_IsBool(wifi_enbl)){
-        //    wifi_enabled = cJSON_IsTrue(wifi_enbl);
-        //}
-
-        bool valid_ssid = wifi_ssid && cJSON_IsString(wifi_ssid) && strcmp(wifi_ssid->valuestring, "") != 0;
-        bool valid_pswd = wifi_password && cJSON_IsString(wifi_password) && strcmp(wifi_password->valuestring, "") != 0;
-
-        if(valid_ssid && valid_pswd){
-            if(wifi_credential != NULL){
-                wifi_credential(wifi_ssid->valuestring, wifi_password->valuestring);
+            if(matrix_face != NULL){
+                matrix_face(view->valuestring);
             }else{
-                ESP_LOGI(TAG, "Nessuna callback registrata per le credenziali wifi!!"); 
+                ESP_LOGI(TAG, "Nessuna callback registrata per set_matrixface_callback !!"); 
             }
         }
+
+        // WIFI
+        cJSON *wifi = cJSON_GetObjectItem(json, "wifi");
+        if(cJSON_IsObject(wifi)) {
+            cJSON *wifi_enbl = cJSON_GetObjectItem(wifi, "enabled");
+            cJSON *wifi_ssid = cJSON_GetObjectItem(wifi, "ssid");
+            cJSON *wifi_ipv4 = cJSON_GetObjectItem(wifi, "ipv4");
+            cJSON *wifi_password = cJSON_GetObjectItem(wifi, "password");
+
+            //if(wifi_enbl && cJSON_IsBool(wifi_enbl)){
+            //    wifi_enabled = cJSON_IsTrue(wifi_enbl);
+            //}
+
+            bool valid_ssid = wifi_ssid && cJSON_IsString(wifi_ssid) && strcmp(wifi_ssid->valuestring, "") != 0;
+            bool valid_pswd = wifi_password && cJSON_IsString(wifi_password) && strcmp(wifi_password->valuestring, "") != 0;
+
+            if(valid_ssid && valid_pswd){
+                if(wifi_credential != NULL){
+                    wifi_credential(wifi_ssid->valuestring, wifi_password->valuestring);
+                }else{
+                    ESP_LOGI(TAG, "Nessuna callback registrata per le credenziali wifi!!"); 
+                }
+            }
+        }else{
+            ESP_LOGI(TAG, "Json parse: wifi non trovato");
+        }
+
+
+
 
         //if(wifi_ipv4 && cJSON_IsString(wifi_ipv4) && strcmp(wifi_ipv4->valuestring, "") != 0) {
         //    ESP_LOGI(TAG, "ipv4 aggiornato %s", ipv4);

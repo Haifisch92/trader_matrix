@@ -1,257 +1,722 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Panel Config</title>
-    <style>
-        :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --primary-brown: #473925; /* Marrone */
-            --primary-brown-hover: #594C3A;
-            --text-color: #eeeeee;
-            --accent-color: #393e46;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trader Matrix - Configurazione</title>
+  <style>
+    :root {
+      --bg-color: #0d1117;
+      --card-bg: #161b22;
+      --border-color: #30363d;
+      --text-main: #e6edf3;
+      --text-muted: #8b949e;
+      --accent-green: #00e676;
+      --accent-green-hover: #00c853;
+      --accent-blue: #2f81f7;
+      --accent-red: #f85149;
+      --input-bg: #010409;
+    }
 
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
 
-        .container {
-            width: 100%;
-            max-width: 500px;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
 
-        /* Header personalizzato */
-        .header-title {
-            text-align: center;
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--primary-brown);
-            margin-bottom: 30px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
 
-        .dot { color: white; }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 20px;
+    }
 
-        .section {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            border-left: 4px solid var(--primary-brown);
-        }
 
-        h2 { font-size: 1.1rem; margin-top: 0; color: var(--primary-brown); text-transform: uppercase; }
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+    }
 
-        .input-group { margin-bottom: 15px; }
 
-        label { display: block; margin-bottom: 5px; font-size: 0.85rem; color: #aaa; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
 
-        input, select {
-            width: 100%;
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid var(--accent-color);
-            background: #252a34;
-            color: white;
-            box-sizing: border-box;
-            outline: none;
-        }
 
-        input:focus { border-color: var(--primary-brown); }
+    header h1 {
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-        /* Toggle Button */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 46px;
-            height: 20px;
-        }
 
-        .switch input { opacity: 0; width: 0; height: 0; }
+    .led-dot {
+      width: 12px;
+      height: 12px;
+      background-color: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-green);
+      display: inline-block;
+    }
 
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #444;
-            transition: .4s;
-            border-radius: 20px;
-        }
 
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 14px; width: 14px;
-            left: 3px; bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
 
-        input:checked + .slider { background-color: var(--primary-brown); }
-        input:checked + .slider:before { transform: translateX(26px); }
 
-        .flex-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
+    .card h2 {
+      font-size: 1.15rem;
+      margin-bottom: 16px;
+      color: var(--accent-blue);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+    }
 
-        /* Pulsante Marrone */
-        .btn-save {
-            width: 100%;
-            padding: 15px;
-            background-color: var(--primary-brown);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s, transform 0.1s;
-            margin-top: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-        }
 
-        .btn-save:hover { background-color: var(--primary-brown-hover); }
-        .btn-save:active { transform: scale(0.98); }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
 
-    </style>
+
+    @media (max-width: 600px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      color: var(--text-muted);
+    }
+
+
+    input[type="text"],
+    input[type="password"],
+    input[type="date"],
+    input[type="time"],
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+    }
+
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+    }
+
+
+    /* Selettore Facciata Attiva (Radio Cards) */
+    .view-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+
+    @media (max-width: 600px) {
+      .view-selector {
+        grid-template-columns: 1fr;
+      }
+    }
+
+
+    .view-option {
+      position: relative;
+    }
+
+
+    .view-option input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+    }
+
+
+    .view-option label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background-color: var(--input-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-main);
+      font-weight: 600;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+
+    .view-option input[type="radio"]:checked + label {
+      border-color: var(--accent-green);
+      background-color: rgba(0, 230, 118, 0.08);
+      color: var(--accent-green);
+    }
+
+
+    .view-option span.desc {
+      font-size: 0.78rem;
+      font-weight: normal;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+
+    /* Checkbox & Toggle */
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      cursor: pointer;
+    }
+
+
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent-blue);
+    }
+
+
+    .hidden {
+      display: none;
+    }
+
+
+    /* Gestione Asset (Tags) */
+    .asset-input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+
+    .btn-secondary {
+      background-color: #21262d;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+
+    .btn-secondary:hover {
+      background-color: #30363d;
+    }
+
+
+    .btn-primary {
+      background-color: var(--accent-green);
+      color: #000;
+      width: 100%;
+      padding: 14px;
+      font-size: 1.05rem;
+    }
+
+
+    .btn-primary:hover {
+      background-color: var(--accent-green-hover);
+    }
+
+
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+
+    .tag {
+      background-color: #21262d;
+      border: 1px solid var(--border-color);
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: monospace;
+    }
+
+
+    .tag button {
+      background: none;
+      border: none;
+      color: var(--accent-red);
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+
+    /* Toast Notification & Debug */
+    #statusBanner {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: none;
+      font-weight: 500;
+      text-align: center;
+    }
+
+
+    .status-success {
+      background-color: rgba(0, 230, 118, 0.15);
+      border: 1px solid var(--accent-green);
+      color: var(--accent-green);
+    }
+
+
+    .status-error {
+      background-color: rgba(248, 81, 73, 0.15);
+      border: 1px solid var(--accent-red);
+      color: var(--accent-red);
+    }
+
+
+    pre {
+      background-color: var(--input-bg);
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      overflow-x: auto;
+    }
+  </style>
 </head>
 <body>
 
+
 <div class="container">
-    <div class="header-title">TRADING <span class="dot">•</span> PANEL</div>
-<div class="section">
-        <div class="flex-row">
-            <h2>WiFi Connection</h2>
-            <label class="switch">
-                <input type="checkbox" id="wifi_toggle">
-                <span class="slider"></span>
-            </label>
+  <header>
+    <h1><span class="led-dot"></span> Trader Matrix</h1>
+    <span style="font-size: 0.85rem; color: var(--text-muted);">Matrix Web Config</span>
+  </header>
+
+
+  <div id="statusBanner"></div>
+
+
+  <form id="configForm">
+    
+    <!-- 1. FACCIATA CORRENTE -->
+    <div class="card">
+      <h2>1. Facciata Corrente di Visualizzazione</h2>
+      <div class="view-selector">
+        <div class="view-option">
+          <input type="radio" id="view_clock" name="current_view" value="clock_view" checked>
+          <label for="view_clock">
+            Clock View
+            <span class="desc">Orologio</span>
+          </label>
         </div>
-        <div class="input-group">
-            <label>SSID (Nome Rete)</label>
-            <input type="text" id="wifi_ssid" placeholder="Inserisci SSID">
+        <div class="view-option">
+          <input type="radio" id="view_wallstreet" name="current_view" value="wallstreet_view">
+          <label for="view_wallstreet">
+            Wallstreet View
+            <span class="desc">Ticker variazioni asset</span>
+          </label>
         </div>
-        <div class="input-group">
-            <label>Password</label>
-            <input type="password" id="wifi_pass" placeholder="Inserisci Password">
+        <div class="view-option">
+          <input type="radio" id="view_chart" name="current_view" value="chart_view">
+          <label for="view_chart">
+            Chart View
+            <span class="desc">Grafici di mercato</span>
+          </label>
         </div>
-        <div class="input-group">
-            <label>Static IP (opzionale)</label>
-            <input type="text" id="wifi_ip" placeholder="192.168.1.100">
-        </div>
+      </div>
     </div>
 
-    <div class="section">
-        <h2>Orologio</h2>
-        <div class="input-group">
-            <label>Data</label>
-            <input type="date" id="clock_date">
+
+    <!-- 2. IMPOSTAZIONI FACCIATE -->
+    <div class="card">
+      <h2>2. Impostazioni Modalità Display</h2>
+      
+      <!-- Wall Street -->
+      <div class="form-group">
+        <label for="ws_text_pos">Wall Street View — Posizione Testo Scorrevole</label>
+        <select id="ws_text_pos" name="ws_text_pos">
+          <option value="bottom">Testo in basso</option>
+          <option value="top">Testo in alto</option>
+          <option value="both">Testo in basso e in alto</option>
+        </select>
+      </div>
+
+
+      <!-- Grafici -->
+      <div class="form-group">
+        <label for="chart_style">Chart View — Stile Riempimento Grafici</label>
+        <select id="chart_style" name="chart_style">
+          <option value="empty">Linea</option>
+          <option value="filled">Area piena</option>
+          <option value="gradient">Area a riempimento graduale</option>
+        </select>
+      </div>
+
+
+      <!-- Orologio -->
+      <div class="form-group">
+        <label for="clock_effect">Clock View — Effetto Aggiornamento Ora</label>
+        <select id="clock_effect" name="clock_effect">
+          <option value="fade">Fade </option>
+          <option value="rolling">Rolling </option>
+        </select>
+      </div>
+
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="rtc_date">Data Manuale (RTC)</label>
+          <input type="date" id="rtc_date" name="rtc_date">
         </div>
-        <div class="input-group">
-            <label>Ora</label>
-            <input type="time" id="clock_time">
+        <div class="form-group">
+          <label for="rtc_time">Ora Manuale (RTC)</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="time" id="rtc_time" name="rtc_time" step="1">
+            <button type="button" class="btn btn-secondary" onclick="syncBrowserTime()" title="Sincronizza con ora del dispositivo">Ora attuale</button>
+          </div>
         </div>
-        <div class="input-group">
-            <label>Design Interfaccia</label>
-            <select id="clock_design">
-                <option value="1">Modern Digital</option>
-                <option value="2">Minimalist Dots</option>
-                <option value="3">Classic Segments</option>
-            </select>
-        </div>
+      </div>
     </div>
 
-    <div class="section">
-        <h2>Brand & Loghi</h2>
-        <div class="input-group">
-            <label>Logo Matrice</label>
-            <select id="logo_select">
-                <option value="logo_1">Bitcoin Symbol</option>
-                <option value="logo_2">Ethereum Symbol</option>
-                <option value="logo_3">Custom Icon</option>
-            </select>
+
+    <!-- 3. API & DATI DI MERCATO -->
+    <div class="card">
+      <h2>3. API Dati di Mercato e Asset</h2>
+      <div class="form-group">
+        <label for="api_endpoint">Endpoint API (URL base o WebSocket)</label>
+        <input type="text" id="api_endpoint" name="api_endpoint" placeholder="es. https://api.binance.com/api/v3/ticker/24hr">
+      </div>
+      <div class="form-group">
+        <label for="api_key">API Key</label>
+        <input type="password" id="api_key" name="api_key" placeholder="Inserisci la tua API Key (lascia vuoto se non richiesta)">
+      </div>
+
+
+      <div class="form-group">
+        <label>Asset Registrati (Ticker)</label>
+        <div class="asset-input-row">
+          <input type="text" id="new_asset" placeholder="es. BTCUSDT, AAPL, NVDA..." onkeypress="handleAssetKey(event)">
+          <button type="button" class="btn btn-secondary" onclick="addAsset()">+ Aggiungi</button>
         </div>
+        <div class="tags-container" id="assetList"></div>
+      </div>
     </div>
 
-    <div class="section">
-        <h2>Trading Data</h2>
-        <div class="input-group">
-            <label>API Key</label>
-            <input type="password" id="api_key">
+
+    <!-- 4. RETE WIFI -->
+    <div class="card">
+      <h2>4. Connessione Wi-Fi</h2>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="wifi_ssid">SSID Rete Wi-Fi</label>
+          <input type="text" id="wifi_ssid" name="wifi_ssid" placeholder="Nome della rete Wi-Fi">
         </div>
-        <div class="input-group">
-            <label>End Point</label>
-            <input type="text" id="endpoint" placeholder="api.binance.com/...">
+        <div class="form-group">
+          <label for="wifi_pass">Password Wi-Fi</label>
+          <input type="password" id="wifi_pass" name="wifi_pass" placeholder="Password Wi-Fi">
         </div>
-        <div class="input-group">
-            <label>Asset</label>
-            <input type="text" id="asset" placeholder="BTC/USDT">
+      </div>
+
+
+      <label class="checkbox-group">
+        <input type="checkbox" id="use_static_ip" onchange="toggleStaticIp()">
+        <span>Usa IP Statico (opzionale)</span>
+      </label>
+
+
+      <div id="staticIpFields" class="grid-2 hidden">
+        <div class="form-group">
+          <label for="static_ip">Indirizzo IP</label>
+          <input type="text" id="static_ip" placeholder="192.168.1.150">
         </div>
-        <div class="input-group">
-            <label>Visualizzazione</label>
-            <select id="trading_mode">
-                <option value="v1">Prezzo Real-Time</option>
-                <option value="v2">Candlestick Pattern</option>
-            </select>
+        <div class="form-group">
+          <label for="static_gateway">Gateway</label>
+          <input type="text" id="static_gateway" placeholder="192.168.1.1">
         </div>
+        <div class="form-group">
+          <label for="static_subnet">Subnet Mask</label>
+          <input type="text" id="static_subnet" placeholder="255.255.255.0">
+        </div>
+        <div class="form-group">
+          <label for="static_dns">DNS Primario</label>
+          <input type="text" id="static_dns" placeholder="8.8.8.8">
+        </div>
+      </div>
     </div>
 
-    <button class="btn-save" onclick="saveData()">SALVA CONFIGURAZIONE</button>
+
+    <button type="submit" class="btn btn-primary">Salva e Applica Configurazione</button>
+  </form>
+
+
+  <!-- Anteprima Payload JSON per debug ESP-IDF 
+
+  <div class="card" style="margin-top: 24px;">
+    <h2>Anteprima Payload JSON (inviato a POST /api/config)</h2>
+    <pre id="jsonPreview">{}</pre>
+  </div> -->
 </div>
 
+
 <script>
+  // Lista asset di default
+  let assets = ["BTCUSDT", "ETHUSDT", "AAPL"];
 
-    function saveData() {
-        const payload = {
-            wifi: {
-                enabled: document.getElementById('wifi_toggle').checked,
-                ssid: document.getElementById('wifi_ssid').value,
-                password: document.getElementById('wifi_pass').value,
-                ip: document.getElementById('wifi_ip').value
-            },
-            clock: {
-                date: document.getElementById('clock_date').value,
-                time: document.getElementById('clock_time').value,
-                design: document.getElementById('clock_design').value
-            },
-            logo: document.getElementById('logo_select').value,
-            trading: {
-                key: document.getElementById('api_key').value,
-                url: document.getElementById('endpoint').value,
-                asset: document.getElementById('asset').value,
-                mode: document.getElementById('trading_mode').value
-            }
-        };
 
-        console.log("Inviando dati all'ESP32:", payload);
-        alert("Configurazione TRADING • PANEL inviata con successo!");
-        
-        // Esempio chiamata AJAX:
-        const backend_url = document.location.origin
-        const url = `${backend_url}/submit`;
-        
-        fetch(url, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-            headers: {'Content-Type': 'application/json'}
-        });
+  // Inizializzazione al caricamento della pagina
+  document.addEventListener("DOMContentLoaded", () => {
+    syncBrowserTime();
+    renderAssets();
+    updateJsonPreview();
+    loadConfigFromESP();
+
+
+    // Aggiorna anteprima JSON ogni volta che cambia un campo
+    document.getElementById("configForm").addEventListener("input", updateJsonPreview);
+  });
+
+
+  // Mostra/nasconde campi IP Statico
+  function toggleStaticIp() {
+    const isChecked = document.getElementById("use_static_ip").checked;
+    const fields = document.getElementById("staticIpFields");
+    if (isChecked) {
+      fields.classList.remove("hidden");
+    } else {
+      fields.classList.add("hidden");
     }
+    updateJsonPreview();
+  }
+
+
+  // Imposta data e ora dal browser dell'utente
+  function syncBrowserTime() {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+
+
+    document.getElementById("rtc_date").value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById("rtc_time").value = `${hh}:${min}:${ss}`;
+    updateJsonPreview();
+  }
+
+
+  // Gestione lista Asset
+  function handleAssetKey(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addAsset();
+    }
+  }
+
+
+  function addAsset() {
+    const input = document.getElementById("new_asset");
+    const val = input.value.trim().toUpperCase();
+    if (val && !assets.includes(val)) {
+      assets.push(val);
+      input.value = "";
+      renderAssets();
+      updateJsonPreview();
+    }
+  }
+
+
+  function removeAsset(index) {
+    assets.splice(index, 1);
+    renderAssets();
+    updateJsonPreview();
+  }
+
+
+  function renderAssets() {
+    const container = document.getElementById("assetList");
+    container.innerHTML = "";
+    assets.forEach((asset, index) => {
+      const tag = document.createElement("div");
+      tag.className = "tag";
+      tag.innerHTML = `<span>${asset}</span><button type="button" onclick="removeAsset(${index})">&times;</button>`;
+      container.appendChild(tag);
+    });
+  }
+
+
+  // Costruisce l'oggetto JSON da inviare all'ESP32
+  function buildPayload() {
+    const currentView = document.querySelector('input[name="current_view"]:checked').value;
+    const useStatic = document.getElementById("use_static_ip").checked;
+
+
+    return {
+      current_view: currentView, // "clock_view" | "wallstreet_view" | "chart_view"
+      wallstreet: {
+        text_position: document.getElementById("ws_text_pos").value // "bottom" | "top" | "both"
+      },
+      clock: {
+        effect: document.getElementById("clock_effect").value, // "fade" | "rolling"
+        date: document.getElementById("rtc_date").value,
+        time: document.getElementById("rtc_time").value
+      },
+      chart: {
+        fill_style: document.getElementById("chart_style").value // "empty" | "filled" | "gradient"
+      },
+      market_api: {
+        endpoint: document.getElementById("api_endpoint").value.trim(),
+        api_key: document.getElementById("api_key").value.trim(),
+        assets: assets
+      },
+      wifi: {
+        ssid: document.getElementById("wifi_ssid").value.trim(),
+        password: document.getElementById("wifi_pass").value,
+        static_ip_enabled: useStatic,
+        ip: useStatic ? document.getElementById("static_ip").value.trim() : "",
+        gateway: useStatic ? document.getElementById("static_gateway").value.trim() : "",
+        subnet: useStatic ? document.getElementById("static_subnet").value.trim() : "",
+        dns: useStatic ? document.getElementById("static_dns").value.trim() : ""
+      }
+    };
+  }
+
+
+  function updateJsonPreview() {
+    const payload = buildPayload();
+    document.getElementById("jsonPreview").textContent = JSON.stringify(payload, null, 2);
+  }
+
+
+  function showStatus(message, isError = false) {
+    const banner = document.getElementById("statusBanner");
+    banner.textContent = message;
+    banner.className = isError ? "status-error" : "status-success";
+    banner.style.display = "block";
+    setTimeout(() => { banner.style.display = "none"; }, 5000);
+  }
+
+
+  // Carica configurazione attuale dall'ESP32 (GET /api/config)
+  async function loadConfigFromESP() {
+    try {
+      const res = await fetch("/api/config");
+      if (!res.ok) return;
+      const data = await res.json();
+
+
+      if (data.current_view) {
+        const radio = document.querySelector(`input[name="current_view"][value="${data.current_view}"]`);
+        if (radio) radio.checked = true;
+      }
+      if (data.wallstreet?.text_position) {
+        document.getElementById("ws_text_pos").value = data.wallstreet.text_position;
+      }
+      if (data.clock) {
+        if (data.clock.effect) document.getElementById("clock_effect").value = data.clock.effect;
+        if (data.clock.date) document.getElementById("rtc_date").value = data.clock.date;
+        if (data.clock.time) document.getElementById("rtc_time").value = data.clock.time;
+      }
+      if (data.chart?.fill_style) {
+        document.getElementById("chart_style").value = data.chart.fill_style;
+      }
+      if (data.market_api) {
+        document.getElementById("api_endpoint").value = data.market_api.endpoint || "";
+        document.getElementById("api_key").value = data.market_api.api_key || "";
+        if (Array.isArray(data.market_api.assets)) {
+          assets = data.market_api.assets;
+          renderAssets();
+        }
+      }
+      if (data.wifi) {
+        document.getElementById("wifi_ssid").value = data.wifi.ssid || "";
+        document.getElementById("wifi_pass").value = data.wifi.password || "";
+        document.getElementById("use_static_ip").checked = !!data.wifi.static_ip_enabled;
+        document.getElementById("static_ip").value = data.wifi.ip || "";
+        document.getElementById("static_gateway").value = data.wifi.gateway || "";
+        document.getElementById("static_subnet").value = data.wifi.subnet || "";
+        document.getElementById("static_dns").value = data.wifi.dns || "";
+        toggleStaticIp();
+      }
+      updateJsonPreview();
+    } catch (e) {
+      // Silenzioso se aperto in locale senza ESP32 connesso
+      console.log("Modalità offline/anteprima: endpoint /api/config non raggiungibile.");
+    }
+  }
+
+
+  // Invio configurazione all'ESP32 (POST /api/config)
+  document.getElementById("configForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const payload = buildPayload();
+
+
+    try {
+      const backend_url = document.location.origin + "/submit"
+      const response = await fetch(backend_url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+
+      if (response.ok) {
+        showStatus("Configurazione salvata con successo sull'ESP32!");
+      } else {
+        showStatus("Errore dal server ESP32: " + response.status, true);
+      }
+    } catch (err) {
+      showStatus("Impossibile contattare l'ESP32 (verifica la connessione).", true);
+    }
+  });
 </script>
+
+
 </body>
 </html>

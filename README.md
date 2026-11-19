@@ -81,6 +81,11 @@ Una volta avviato il dispositivo e connesso alla rete Wi-Fi, potrai accedere all
 * Selezionare i ticker di mercato da monitorare.
 * Modificare le modalità di visualizzazione sulla matrice LED.
 
+Comandi per convertire e caricare una pagina web
+```bash
+gzip -9 -k index.html
+xxd -i index.html.gz > index.html.gz.h
+```
 ---
 
 ## 🤝 Contribuire

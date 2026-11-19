@@ -18,6 +18,9 @@
 bool ap_mode = false;
 int wallstreet_pos = 0;
 int wallstreet1_pos = 64;
+bool update_face = false;
+int matrix_face = 0;
+
 
 void set_time(){
     struct tm tm = {
@@ -46,6 +49,25 @@ static void wifi_credential_handler(const char *ssid, const char *password){
     //wifi_init_sta(ssid, password);     
     //ap_mode = false;
 }
+
+static void matrix_face_handler(const char *view){
+
+    ESP_LOGI("MAIN", "CALLBACK ATTIVATA NEL MAIN");
+    ESP_LOGI("MAIN", "VIEW aggiornato %s", view);
+
+    if(strcmp(view, "clock_view") == 0){
+        update_face = true;
+        matrix_face = 0;
+    }else if(strcmp(view, "wallstreet_view") == 0){
+        update_face = true;
+        matrix_face = 1;
+    }else if(strcmp(view, "chart_view") == 0){
+        update_face = true;
+        matrix_face = 2;
+    }
+
+}
+
 /*
 void slotmachine_clock(){
     //i gfx hanno le cordinate del disegno caratteri che partono dal basso 
@@ -71,12 +93,10 @@ void slotmachine_clock(){
 
 void clock_face(){
     uint16_t weak_white = 0x31a6;
-
-    scanning_logo(_WORLD_MAP, 120, 56, 0, MATRIX_W, 0, MATRIX_H, 0);
-    update_clock("", "03:34", 18, 14 , 1);
+    scanning_logo(_WORLD_MAP, 120, 56, 0, MATRIX_W, 0, MATRIX_H, 0);   
 }
 
-void wallstreet_face(int wallstreet_mode){
+void wallstreet_face(int wallstreet_mode, bool update){
         
         if(wallstreet_mode == 0 || wallstreet_mode == 2) matrix_clear_area(0, MATRIX_W, 26, MATRIX_H);
         if(wallstreet_mode == 1 || wallstreet_mode == 2) matrix_clear_area(0, MATRIX_W, 0, 7);
@@ -91,21 +111,22 @@ void wallstreet_face(int wallstreet_mode){
         if(wallstreet_mode == 1 || wallstreet_mode == 2)
             wallstreet1_pos = wallstreet_text(testo, wallstreet1_pos, 0);
 
-        switch(wallstreet_mode){
-            case 0:
-                scanning_logo(_WORLD_MAP, 120, 56, 0, MATRIX_W, 0, MATRIX_H - 7, 0);
-                break;
-            case 1:
-                scanning_logo(_WORLD_MAP, 120, 56, 0, MATRIX_W, 7, MATRIX_H, 0);
-                break;
-            case 2:
-                scanning_logo(_WORLD_MAP, 120, 56, 0, MATRIX_W, 7, MATRIX_H - 7, 0);
-                break;
+        if(update){
+            switch(wallstreet_mode){
+                case 0:
+                    scanning_logo(_WORLD_MAP, 120, 56, 0, MATRIX_W, 0, MATRIX_H - 7, 0);
+                    break;
+                case 1:
+                    scanning_logo(_WORLD_MAP, 120, 56, 0, MATRIX_W, 7, MATRIX_H, 0);
+                    break;
+                case 2:
+                    scanning_logo(_WORLD_MAP, 120, 56, 0, MATRIX_W, 7, MATRIX_H - 7, 0);
+                    break;
+            }
         }
 }
 
 void chart_face(){
-    matrix_clear();
     draw_text(0,0, "EURUSD 1.1097",0, 255, 0, 125);
     draw_chart(eurusd, sizeof(eurusd), 20, MATRIX_W, (MATRIX_H - 20) - 1, 0);
 }
@@ -114,7 +135,7 @@ void main_task(){
 
     int last_minute = -1;
     char last_strtime[64] = "";
-    //clock_face();
+    clock_face();
 
     while(1){
         
@@ -129,11 +150,41 @@ void main_task(){
         strftime(strtime, sizeof(strtime), "%H:%M", &timeinfo);
 
         if(timeinfo.tm_min != last_minute){
+            if(matrix_face == 0 || matrix_face == 1){
+                update_clock(last_strtime, strtime, 18, 14 , 1);
+            }
             last_minute = timeinfo.tm_min;
             strcpy(last_strtime, strtime);
 
         }
-        wallstreet_face(2);
+
+        switch(matrix_face){
+            case 0:
+                if(update_face){
+                    matrix_clear();
+                    last_minute = -1;
+                    clock_face();
+                    update_face = false;
+                }
+                
+                break;
+            case 1:
+                if(update_face){
+                    matrix_clear();
+                    last_minute = -1;
+                }
+                wallstreet_face(2, update_face);
+                update_face = false;
+                break;
+            case 2:
+                if(update_face){
+                    matrix_clear();
+                    update_face = false;
+                }
+                chart_face();
+                break;
+        }
+        
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
@@ -150,6 +201,8 @@ void app_main(void) {
     matrix_init();
 
     set_wifi_callback(wifi_credential_handler);
+    set_matrixface_callback(matrix_face_handler);
+
     TaskHandle_t maintask_handle = NULL;
     xTaskCreate(main_task, "main_task", 4092, NULL, 5, &maintask_handle);
 

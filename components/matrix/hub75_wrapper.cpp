@@ -80,7 +80,7 @@ void draw_text(int x, int y, const char* text, int r, int g, int b, int brightne
     uint8_t sb = (b * brightness) >> 8;
 
     uint16_t color = matrix->color565(sr, sg, sb);
-    ESP_LOGI("matrix", "color 0x%04x", color);
+
     while (*text) {
         draw_char(text_x, y, *text, color);
 
